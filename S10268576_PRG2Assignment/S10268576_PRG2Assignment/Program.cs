@@ -2,6 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 
+//==========================================================
+// Student Number : S10268576
+// Student Name : Tang Quan Jun
+// Partner Name : Rajakumar Kishore
+//==========================================================
+
+
+// Feature 1: Load files (restaurants and food items)
+// Implemented by: S10268576 - QUAN JUN
 class Program
 {
     static List<Restaurant> restaurants = new List<Restaurant>();
@@ -11,6 +20,9 @@ class Program
         LoadFoodItems();
 
         Console.WriteLine($"{restaurants.Count} restaurants loaded!");
+        Console.WriteLine();
+
+        ListAllRestaurantsAndMenuItems();
     }
     static void LoadRestaurants()
     {
@@ -35,4 +47,18 @@ class Program
             }
         }
     }
+
+    static void ListAllRestaurantsAndMenuItems()
+    {
+        Console.WriteLine("All Restaurants and Menu Items");
+        Console.WriteLine("==============================");
+
+        foreach (var restaurant in restaurants)
+        {
+            Console.WriteLine($"Restaurant: {restaurant.RestaurantName} ({restaurant.RestaurantId})");
+            restaurant.Menu.DisplayFoodItems();
+        }
+    }
+
+
 }

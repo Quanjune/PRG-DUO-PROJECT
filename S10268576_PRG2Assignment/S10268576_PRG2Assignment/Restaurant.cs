@@ -1,4 +1,14 @@
-﻿public class Restaurant
+﻿
+
+// DONE BY KISHORE
+
+//==========================================================
+// Student Number : S10268576
+// Student Name : Tang Quan Jun
+// Partner Name : Rajakumar Kishore
+//==========================================================
+
+public class Restaurant
 {
     public string RestaurantId { get; set; }
     public string RestaurantName { get; set; }

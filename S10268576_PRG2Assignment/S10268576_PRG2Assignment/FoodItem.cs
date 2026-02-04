@@ -1,4 +1,15 @@
-﻿public class FoodItem
+﻿
+
+// DONE BY KISHORE
+
+//==========================================================
+// Student Number : S10268576
+// Student Name : Tang Quan Jun
+// Partner Name : Rajakumar Kishore
+//==========================================================
+
+
+public class FoodItem
 {
     public string ItemName { get; set; }
     public string Description { get; set; }

@@ -1,4 +1,14 @@
-﻿public class SpecialOffer
+﻿
+
+// DONE BY KISHORE
+
+//==========================================================
+// Student Number : S10268576
+// Student Name : Tang Quan Jun
+// Partner Name : Rajakumar Kishore
+//==========================================================
+
+public class SpecialOffer
 {
     public string OfferCode { get; set; }
     public string Description { get; set; }
