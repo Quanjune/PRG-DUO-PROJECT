@@ -7,7 +7,10 @@ class Program
     static List<Restaurant> restaurants = new List<Restaurant>();
     static void Main()
     {
-        
+        LoadRestaurants();
+        LoadFoodItems();
+
+        Console.WriteLine($"{restaurants.Count} restaurants loaded!");
     }
     static void LoadRestaurants()
     {
