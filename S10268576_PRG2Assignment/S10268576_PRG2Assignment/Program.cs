@@ -17,4 +17,19 @@ class Program
             restaurants.Add(new Restaurant(parts[0], parts[1], parts[2]));
         }
     }
+
+    static void LoadFoodItems()
+    {
+        foreach (var line in File.ReadAllLines("fooditems.csv")[1..])
+        {
+            var parts = line.Split(',');
+            var restaurant = restaurants.Find(r => r.RestaurantId == parts[0]);
+            if (restaurant != null)
+            {
+                restaurant.Menu.AddFoodItem(
+                    new FoodItem(parts[1], parts[2], double.Parse(parts[3]))
+                );
+            }
+        }
+    }
 }
