@@ -9,4 +9,12 @@ class Program
     {
         
     }
+    static void LoadRestaurants()
+    {
+        foreach (var line in File.ReadAllLines("restaurants.csv")[1..])
+        {
+            var parts = line.Split(',');
+            restaurants.Add(new Restaurant(parts[0], parts[1], parts[2]));
+        }
+    }
 }
