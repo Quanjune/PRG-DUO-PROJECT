@@ -162,7 +162,8 @@ class Program
             {
                 DeliveryDateTime = deliveryDateTime,
                 TotalAmount = totalAmount,
-                OrderStatus = status
+                OrderStatus = status,
+                RestaurantId = restaurantId
             };
 
             // In LoadOrders() after creating the order:
@@ -191,13 +192,23 @@ class Program
     {
         Console.WriteLine("\nAll Orders");
         Console.WriteLine("==========");
-
-        Console.WriteLine("Order ID | Customer Email | Status | Amount");
+        Console.WriteLine("Order ID Customer      Restaurant          Delivery Date/Time Amount Status");
+        Console.WriteLine("-------- ------------- ------------------- ------------------ ------ ---------");
 
         foreach (var order in orders)
         {
+            // Get customer name
+            string customerName = order.Customer?.CustomerName ?? "Unknown";
+
+            // Get restaurant name
+            Restaurant restaurant = restaurants.Find(r => r.RestaurantId == order.RestaurantId);
+            string restaurantName = restaurant?.RestaurantName ?? "Unknown";
+
+            // Format delivery date/time
+            string deliveryDateTime = order.DeliveryDateTime.ToString("dd/MM/yyyy HH:mm");
+
             Console.WriteLine(
-                $"{order.OrderId} | {order.Customer?.EmailAddress ?? "Unknown"} | {order.OrderStatus} | ${order.TotalAmount:F2}"
+                $"{order.OrderId,-8} {customerName,-13} {restaurantName,-19} {deliveryDateTime,-18} ${order.TotalAmount,-5:F2} {order.OrderStatus}"
             );
         }
     }

@@ -13,6 +13,7 @@ namespace S10268576_PRG2Assignment
 {
     internal class Order
     {
+        public string RestaurantId { get; set; }  // Add this to Order class
         public int OrderId { get; set; }
         public DateTime OrderDateTime { get; set; }
         public string OrderStatus { get; set; }
