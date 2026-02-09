@@ -13,7 +13,7 @@ namespace S10268576_PRG2Assignment
 {
     internal class Order
     {
-        public string RestaurantId { get; set; }  // Add this to Order class
+        public string RestaurantId { get; set; }
         public int OrderId { get; set; }
         public DateTime OrderDateTime { get; set; }
         public string OrderStatus { get; set; }
@@ -21,9 +21,9 @@ namespace S10268576_PRG2Assignment
         public string DeliveryAddress { get; set; }
         public DateTime DeliveryDateTime { get; set; }
         public string PaymentMethod { get; set; }
+        public string SpecialRequest { get; set; }  // ✅ ADD THIS LINE
         public List<OrderedFoodItem> OrderedItems { get; set; }
-
-        public Customer Customer { get; set; }  // ✅ ADD THIS LINE
+        public Customer Customer { get; set; }
 
         public Order(int orderId)
         {
