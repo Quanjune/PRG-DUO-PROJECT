@@ -56,16 +56,14 @@ class Program
                     break;
                     
                 case 4:
-                    // ProcessOrder(); - implement this
-                    Console.WriteLine("Feature not yet implemented");
+                    ProcessOrder();
                     break;
                 case 5:
                     ModifyOrder();
                     break;
                     
                 case 6:
-                    // DeleteOrder(); - implement this
-                    Console.WriteLine("Feature not yet implemented");
+                    ProcessOrder();
                     break;
                 case 0:
                     Console.WriteLine("Thank you for using Gruberoo!");
@@ -714,7 +712,179 @@ class Program
         }
     }
 
-   
+    static Stack<Order> refundStack = new Stack<Order>();
+
+    static void ProcessOrder()
+    {
+        Console.WriteLine("\nProcess Order");
+        Console.WriteLine("=============");
+
+        Console.Write("Enter Restaurant ID: ");
+        string restaurantId = Console.ReadLine();
+
+        var restaurantOrders = orders.Where(o => o.RestaurantId == restaurantId).ToList();
+
+        if (restaurantOrders.Count == 0)
+        {
+            Console.WriteLine("No orders found for this restaurant.");
+            return;
+        }
+
+        foreach (var order in restaurantOrders)
+        {
+            Console.WriteLine($"\nOrder {order.OrderId}:");
+            Console.WriteLine($"Customer: {order.Customer?.CustomerName}");
+
+            Console.WriteLine("Ordered Items:");
+            for (int i = 0; i < order.OrderedItems.Count; i++)
+            {
+                var item = order.OrderedItems[i];
+                Console.WriteLine($"{i + 1}. {item.ItemName} - {item.Quantity}");
+            }
+
+            Console.WriteLine($"Delivery date/time: {order.DeliveryDateTime:dd/MM/yyyy HH:mm}");
+            Console.WriteLine($"Total Amount: ${order.TotalAmount:F2}");
+            Console.WriteLine($"Order Status: {order.OrderStatus}");
+
+            Console.Write("[C]onfirm / [R]eject / [S]kip / [D]eliver: ");
+            string action = Console.ReadLine()?.ToUpper();
+
+            switch (action)
+            {
+                case "C":
+                    if (order.OrderStatus == "Pending")
+                    {
+                        order.OrderStatus = "Preparing";
+                        Console.WriteLine($"Order {order.OrderId} confirmed. Status: Preparing");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Order cannot be confirmed.");
+                    }
+                    break;
+
+                case "R":
+                    if (order.OrderStatus == "Pending")
+                    {
+                        order.OrderStatus = "Rejected";
+                        refundStack.Push(order);
+                        Console.WriteLine($"Order {order.OrderId} rejected. Refund of ${order.TotalAmount:F2} processed.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Order cannot be rejected.");
+                    }
+                    break;
+
+                case "S":
+                    if (order.OrderStatus == "Cancelled")
+                    {
+                        Console.WriteLine("Order skipped.");
+                        continue;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Only cancelled orders can be skipped.");
+                    }
+                    break;
+
+                case "D":
+                    if (order.OrderStatus == "Preparing")
+                    {
+                        order.OrderStatus = "Delivered";
+                        Console.WriteLine($"Order {order.OrderId} delivered.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Order cannot be delivered.");
+                    }
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid action.");
+                    break;
+            }
+        }
+
+        SaveOrdersToCSV();
+    }
+
+
+    static void DeleteOrder()
+    {
+        Console.WriteLine("\nDelete Order");
+        Console.WriteLine("============");
+
+        Console.Write("Enter Customer Email: ");
+        string email = Console.ReadLine();
+
+        Customer customer = customers.Find(c => c.EmailAddress == email);
+        if (customer == null)
+        {
+            Console.WriteLine("Customer not found.");
+            return;
+        }
+
+        var pendingOrders = customer.Orders.Where(o => o.OrderStatus == "Pending").ToList();
+
+        if (pendingOrders.Count == 0)
+        {
+            Console.WriteLine("No pending orders found.");
+            return;
+        }
+
+        Console.WriteLine("Pending Orders:");
+        foreach (var o in pendingOrders)
+        {
+            Console.WriteLine(o.OrderId);
+        }
+
+        Console.Write("Enter Order ID: ");
+        if (!int.TryParse(Console.ReadLine(), out int orderId))
+        {
+            Console.WriteLine("Invalid Order ID.");
+            return;
+        }
+
+        Order orderToDelete = pendingOrders.Find(o => o.OrderId == orderId);
+        if (orderToDelete == null)
+        {
+            Console.WriteLine("Order not found.");
+            return;
+        }
+
+        Console.WriteLine($"\nCustomer: {orderToDelete.Customer?.CustomerName}");
+
+        Console.WriteLine("Ordered Items:");
+        for (int i = 0; i < orderToDelete.OrderedItems.Count; i++)
+        {
+            var item = orderToDelete.OrderedItems[i];
+            Console.WriteLine($"{i + 1}. {item.ItemName} - {item.Quantity}");
+        }
+
+        Console.WriteLine($"Delivery date/time: {orderToDelete.DeliveryDateTime:dd/MM/yyyy HH:mm}");
+        Console.WriteLine($"Total Amount: ${orderToDelete.TotalAmount:F2}");
+        Console.WriteLine($"Order Status: {orderToDelete.OrderStatus}");
+
+        Console.Write("Confirm deletion? [Y/N]: ");
+        string confirm = Console.ReadLine()?.ToUpper();
+
+        if (confirm == "Y")
+        {
+            orderToDelete.OrderStatus = "Cancelled";
+            refundStack.Push(orderToDelete);
+
+            Console.WriteLine($"Order {orderToDelete.OrderId} cancelled. Refund of ${orderToDelete.TotalAmount:F2} processed.");
+
+            SaveOrdersToCSV();
+        }
+        else
+        {
+            Console.WriteLine("Deletion cancelled.");
+        }
+    }
+
+
 
 
 
