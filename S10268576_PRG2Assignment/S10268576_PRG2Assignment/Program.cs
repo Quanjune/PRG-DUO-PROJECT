@@ -52,17 +52,17 @@ class Program
                     ListAllOrders();
                     break;
                 case 3:
-                    // CreateNewOrder(); - implement this
-                    Console.WriteLine("Feature not yet implemented");
+                    CreateNewOrder();
                     break;
+                    
                 case 4:
                     // ProcessOrder(); - implement this
                     Console.WriteLine("Feature not yet implemented");
                     break;
                 case 5:
-                    // ModifyOrder(); - implement this
-                    Console.WriteLine("Feature not yet implemented");
+                    ModifyOrder();
                     break;
+                    
                 case 6:
                     // DeleteOrder(); - implement this
                     Console.WriteLine("Feature not yet implemented");
