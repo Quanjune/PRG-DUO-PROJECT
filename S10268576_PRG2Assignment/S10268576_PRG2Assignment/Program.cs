@@ -73,6 +73,9 @@ class Program
                 case 7:
                     DisplayTotalOrderAmount();
                     break;
+                case 8:
+                    BulkProcessTodayOrders();
+                    break;
                 case 0:
                     Console.WriteLine("Thank you for using Gruberoo!");
                     break;
@@ -91,6 +94,67 @@ class Program
         } while (choice != 0);
     }
 
+
+    static void BulkProcessTodayOrders()
+    {
+        Console.WriteLine("\nBulk Processing Pending Orders");
+        Console.WriteLine("==============================");
+
+        DateTime now = DateTime.Now;
+
+        List<Order> pendingOrders = new List<Order>();
+
+        foreach (Order o in orders)
+        {
+            if (o.OrderStatus == "Pending")
+            {
+                pendingOrders.Add(o);
+            }
+        }
+
+        int totalPending = pendingOrders.Count;
+
+        if (totalPending == 0)
+        {
+            Console.WriteLine("No pending orders to process.");
+            return;
+        }
+
+        int preparingCount = 0;
+        int rejectedCount = 0;
+
+        foreach (Order o in pendingOrders)
+        {
+            TimeSpan timeToDelivery = o.DeliveryDateTime - now;
+
+            if (timeToDelivery.TotalMinutes < 60)
+            {
+                o.OrderStatus = "Rejected";
+                refundStack.Push(o);
+                rejectedCount++;
+            }
+            else
+            {
+                o.OrderStatus = "Preparing";
+                preparingCount++;
+            }
+        }
+
+        int processedCount = preparingCount + rejectedCount;
+        double percentageProcessed =
+            (double)processedCount / orders.Count * 100;
+
+        Console.WriteLine($"Total pending orders   : {totalPending}");
+        Console.WriteLine($"Orders processed       : {processedCount}");
+        Console.WriteLine($"Preparing orders       : {preparingCount}");
+        Console.WriteLine($"Rejected orders        : {rejectedCount}");
+        Console.WriteLine($"% auto-processed       : {percentageProcessed:F2}%");
+
+        SaveOrdersToCSV();
+    }
+
+
+
     static void DisplayMenu()
     {
         Console.WriteLine("===== Gruberoo Food Delivery System =====");
@@ -101,6 +165,7 @@ class Program
         Console.WriteLine("5. Modify an existing order");
         Console.WriteLine("6. Delete an existing order");
         Console.WriteLine("7. Display total order amount");
+        Console.WriteLine("8. Bulk process today's pending orders");
         Console.WriteLine("0. Exit");
         Console.Write("Enter your choice: ");
     }
