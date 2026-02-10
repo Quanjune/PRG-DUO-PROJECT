@@ -21,7 +21,7 @@ namespace S10268576_PRG2Assignment
         public string DeliveryAddress { get; set; }
         public DateTime DeliveryDateTime { get; set; }
         public string PaymentMethod { get; set; }
-        public string SpecialRequest { get; set; }  // ✅ ADD THIS LINE
+        public string SpecialRequest { get; set; } 
         public List<OrderedFoodItem> OrderedItems { get; set; }
         public Customer Customer { get; set; }
 

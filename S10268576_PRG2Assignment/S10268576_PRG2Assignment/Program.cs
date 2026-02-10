@@ -31,7 +31,12 @@ class Program
         // Display welcome message with counts
         Console.WriteLine("Welcome to the Gruberoo Food Delivery System");
         Console.WriteLine($"{restaurants.Count} restaurants loaded!");
-        Console.WriteLine($"51 food items loaded!"); // or count total food items across all restaurants
+        int totalFoodItems = 0;
+        foreach (var restaurant in restaurants)
+        {
+            totalFoodItems += restaurant.Menu.FoodItems.Count;
+        }
+        Console.WriteLine($"{totalFoodItems} food items loaded!"); // or count total food items across all restaurants
         Console.WriteLine($"{customers.Count} customers loaded!");
         Console.WriteLine($"{orders.Count} orders loaded!");
         Console.WriteLine();
@@ -157,7 +162,21 @@ class Program
         }
 
         // Generate new order ID
-        int newOrderId = orders.Count > 0 ? orders.Max(o => o.OrderId) + 1 : 1;
+        int newOrderId = 1;
+        if (orders.Count > 0)
+        {
+            int maxId = 0;
+            foreach (var order in orders)
+            {
+                if (order.OrderId > maxId)
+                {
+                    maxId = order.OrderId;
+                }
+            }
+            newOrderId = maxId + 1;
+        }
+
+
         Order newOrder = new Order(newOrderId)
         {
             Customer = selectedCustomer,
@@ -313,7 +332,14 @@ class Program
         }
 
         // Step 2: Display pending orders for this customer
-        var customerPendingOrders = selectedCustomer.Orders.Where(o => o.OrderStatus == "Pending").ToList();
+        List<Order> customerPendingOrders = new List<Order>();
+        foreach (var order in selectedCustomer.Orders)
+        {
+            if (order.OrderStatus == "Pending")
+            {
+                customerPendingOrders.Add(order);
+            }
+        }
 
         if (customerPendingOrders.Count == 0)
         {
@@ -575,42 +601,31 @@ class Program
 
     static void LoadCustomers()
     {
-        foreach (var line in File.ReadAllLines("customers.csv")[1..])
+        string[] lines = File.ReadAllLines("customers.csv");
+        for (int i = 1; i < lines.Length; i++) // Start from index 1 to skip header
         {
-            var parts = line.Split(',');
+            var parts = lines[i].Split(',');
 
             customers.Add(new Customer(
-                parts[1],  // email (first parameter)
-                parts[0]   // name (second parameter)
+                parts[1],  // email
+                parts[0]   // name
             ));
         }
     }
 
+
     static void LoadOrders()
     {
-        foreach (var line in File.ReadAllLines("orders.csv")[1..])
+        string[] lines = File.ReadAllLines("orders.csv");
+        for (int i = 1; i < lines.Length; i++) // Start from index 1 to skip header
         {
-            var parts = line.Split(',');
-
-            // Your CSV structure:
-            // 0: OrderId
-            // 1: CustomerEmail
-            // 2: RestaurantId
-            // 3: DeliveryDate
-            // 4: DeliveryTime
-            // 5: Address
-            // 6: OrderDateTime
-            // 7: TotalAmount
-            // 8: Status
-            // 9: Items (if present)
+            var parts = lines[i].Split(',');
 
             int orderId = int.Parse(parts[0]);
             string customerEmail = parts[1];
             string restaurantId = parts[2];
 
-            // Combine date and time for delivery
             DateTime deliveryDateTime = DateTime.Parse($"{parts[3]} {parts[4]}");
-
             string address = parts[5];
             DateTime orderDateTime = DateTime.Parse(parts[6]);
 
@@ -618,7 +633,7 @@ class Program
             if (!double.TryParse(amtText, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out double totalAmount))
             {
-                Console.WriteLine($"[ERROR] Bad amount '{parts[7]}' in orders.csv line: {line}");
+                Console.WriteLine($"[ERROR] Bad amount '{parts[7]}' in orders.csv line: {lines[i]}");
                 continue;
             }
 
@@ -632,26 +647,25 @@ class Program
                 RestaurantId = restaurantId
             };
 
-            // In LoadOrders() after creating the order:
             Customer customer = customers.Find(c => c.EmailAddress == customerEmail);
             if (customer != null)
             {
                 customer.AddOrder(order);
-                order.Customer = customer; // Add this line (if Order has a Customer property)
+                order.Customer = customer;
             }
 
-            // Link to restaurant
             Restaurant restaurant = restaurants.Find(r => r.RestaurantId == restaurantId);
             if (restaurant != null)
             {
                 // Add to restaurant if needed
             }
 
-           
-
             orders.Add(order);
         }
     }
+
+
+
 
 
     static void ListAllOrders()
@@ -685,18 +699,24 @@ class Program
 
     static void LoadRestaurants()
     {
-        foreach (var line in File.ReadAllLines("restaurants.csv")[1..])
+        string[] lines = File.ReadAllLines("restaurants.csv");
+        for (int i = 1; i < lines.Length; i++)
         {
-            var parts = line.Split(',');
+            var parts = lines[i].Split(',');
             restaurants.Add(new Restaurant(parts[0], parts[1], parts[2]));
         }
     }
 
+
+
+
+
     static void LoadFoodItems()
     {
-        foreach (var line in File.ReadAllLines("fooditems.csv")[1..])
+        string[] lines = File.ReadAllLines("fooditems.csv");
+        for (int i = 1; i < lines.Length; i++)
         {
-            var parts = line.Split(',');
+            var parts = lines[i].Split(',');
             var restaurant = restaurants.Find(r => r.RestaurantId == parts[0]);
             if (restaurant != null)
             {
@@ -706,6 +726,8 @@ class Program
             }
         }
     }
+
+
 
     static void ListAllRestaurantsAndMenuItems()
     {
@@ -732,7 +754,14 @@ class Program
         Console.Write("Enter Restaurant ID: ");
         string restaurantId = Console.ReadLine();
 
-        var restaurantOrders = orders.Where(o => o.RestaurantId == restaurantId).ToList();
+        List<Order> restaurantOrders = new List<Order>();
+        foreach (var order in orders)
+        {
+            if (order.RestaurantId == restaurantId)
+            {
+                restaurantOrders.Add(order);
+            }
+        }
 
         if (restaurantOrders.Count == 0)
         {
@@ -879,7 +908,14 @@ class Program
             return;
         }
 
-        var pendingOrders = customer.Orders.Where(o => o.OrderStatus == "Pending").ToList();
+        List<Order> pendingOrders = new List<Order>();
+        foreach (var order in customer.Orders)
+        {
+            if (order.OrderStatus == "Pending")
+            {
+                pendingOrders.Add(order);
+            }
+        }
 
         if (pendingOrders.Count == 0)
         {
