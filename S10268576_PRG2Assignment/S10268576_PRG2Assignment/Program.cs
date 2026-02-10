@@ -61,9 +61,12 @@ class Program
                 case 5:
                     ModifyOrder();
                     break;
-                    
+
                 case 6:
-                    ProcessOrder();
+                    DeleteOrder();
+                    break;
+                case 7:
+                    DisplayTotalOrderAmount();
                     break;
                 case 0:
                     Console.WriteLine("Thank you for using Gruberoo!");
@@ -82,6 +85,22 @@ class Program
 
         } while (choice != 0);
     }
+
+    static void DisplayMenu()
+    {
+        Console.WriteLine("===== Gruberoo Food Delivery System =====");
+        Console.WriteLine("1. List all restaurants and menu items");
+        Console.WriteLine("2. List all orders");
+        Console.WriteLine("3. Create a new order");
+        Console.WriteLine("4. Process an order");
+        Console.WriteLine("5. Modify an existing order");
+        Console.WriteLine("6. Delete an existing order");
+        Console.WriteLine("7. Display total order amount");
+        Console.WriteLine("0. Exit");
+        Console.Write("Enter your choice: ");
+    }
+
+
     static void CreateNewOrder()
     {
         Console.WriteLine("\nCreate New Order");
@@ -238,7 +257,8 @@ class Program
         }
 
         // Step 10: Payment method
-        Console.Write("Payment method: [CC] Credit Card / [PP] PayPal / [CD] Cash on Delivery: ");
+        Console.WriteLine("\nPayment method:");
+        Console.Write("[CC] Credit Card / [PP] PayPal / [CD] Cash on Delivery: ");
         string paymentMethod = Console.ReadLine()?.ToUpper();
 
         // Validate payment method
@@ -544,19 +564,6 @@ class Program
         }
     }
 
-    static void DisplayMenu()
-    {
-        Console.WriteLine("===== Gruberoo Food Delivery System =====");
-        Console.WriteLine("1. List all restaurants and menu items");
-        Console.WriteLine("2. List all orders");
-        Console.WriteLine("3. Create a new order");
-        Console.WriteLine("4. Process an order");
-        Console.WriteLine("5. Modify an existing order");
-        Console.WriteLine("6. Delete an existing order");
-        Console.WriteLine("0. Exit");
-        Console.Write("Enter your choice: ");
-    }
-
     static int GetUserChoice()
     {
         if (int.TryParse(Console.ReadLine(), out int choice))
@@ -709,8 +716,11 @@ class Program
         {
             Console.WriteLine($"Restaurant: {restaurant.RestaurantName} ({restaurant.RestaurantId})");
             restaurant.Menu.DisplayFoodItems();
+
+            Console.WriteLine(); // ⭐ ADD THIS LINE (blank spacing between restaurants)
         }
     }
+
 
     static Stack<Order> refundStack = new Stack<Order>();
 
@@ -809,6 +819,50 @@ class Program
         SaveOrdersToCSV();
     }
 
+    static void DisplayTotalOrderAmount()
+    {
+        double grandTotalOrders = 0;
+        double grandTotalRefunds = 0;
+
+        const double DELIVERY_FEE = 5.00;
+
+        foreach (Restaurant r in restaurants)
+        {
+            double restaurantOrderTotal = 0;
+            double restaurantRefundTotal = 0;
+
+            foreach (Order o in orders)
+            {
+                if (o.RestaurantId != r.RestaurantId)
+                    continue;
+
+                if (o.OrderStatus == "Delivered")
+                {
+                    restaurantOrderTotal += (o.TotalAmount - DELIVERY_FEE);
+                }
+                else if (o.OrderStatus == "Rejected" || o.OrderStatus == "Cancelled")
+                {
+                    restaurantRefundTotal += o.TotalAmount;
+                }
+            }
+
+            grandTotalOrders += restaurantOrderTotal;
+            grandTotalRefunds += restaurantRefundTotal;
+
+            Console.WriteLine($"Restaurant: {r.RestaurantName}");
+            Console.WriteLine($"Total Delivered Orders (less delivery fee): ${restaurantOrderTotal:F2}");
+            Console.WriteLine($"Total Refunds: ${restaurantRefundTotal:F2}");
+            Console.WriteLine();
+        }
+
+        double finalEarnings = grandTotalOrders - grandTotalRefunds;
+
+        Console.WriteLine("===== OVERALL TOTALS =====");
+        Console.WriteLine($"Total Order Amount: ${grandTotalOrders:F2}");
+        Console.WriteLine($"Total Refunds: ${grandTotalRefunds:F2}");
+        Console.WriteLine($"Final Amount Gruberoo Earns: ${finalEarnings:F2}");
+    }
+
 
     static void DeleteOrder()
     {
@@ -883,11 +937,4 @@ class Program
             Console.WriteLine("Deletion cancelled.");
         }
     }
-
-
-
-
-
-
-
 }
