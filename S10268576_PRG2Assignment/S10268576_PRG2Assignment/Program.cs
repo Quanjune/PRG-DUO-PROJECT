@@ -13,15 +13,6 @@ using System.IO;
 // ==========================================================
 // Feature 1: Load Data from CSV Files
 // Implemented by: S10268576 – Tang Quan Jun
-//
-// Description:
-// This feature loads all required system data at program startup,
-// including restaurants, food items, customers, and orders from
-// their respective CSV files.
-//  
-// Purpose:
-// Ensures the Gruberoo system is fully initialised with persistent
-// data before any operations are performed.
 // ==========================================================
 class Program
 {
@@ -94,10 +85,6 @@ class Program
             }
             else if (choice == 9)
             {
-                DisplayFavouriteRestaurant();
-            }
-            else if (choice == 10)
-            {
                 ReorderFavouriteOrder();
             }
             else if (choice == 0)
@@ -119,32 +106,7 @@ class Program
 
     // ==========================================================
     // Advanced Feature (a): Bulk Processing of Unprocessed Orders
-    // Implemented by: Rajakumar Kishore - s10268853h
-    //
-    // Description:
-    // This feature performs bulk processing of all unprocessed
-    // orders for the current day.
-    //
-    // Functions:
-    // - Identifies all orders with status "Pending"
-    // - Displays the total number of pending orders found
-    // - Iterates through each order in the Restaurant Order Queues
-    // - Automatically processes each order based on delivery time
-    // - Sets order status to "Rejected" if delivery time is
-    //   less than 1 hour from current time
-    // - Otherwise sets order status to "Preparing"
-    //
-    // Summary Statistics Displayed:
-    // - Total number of orders processed
-    // - Number of orders marked as "Preparing"
-    // - Number of orders marked as "Rejected"
-    // - Percentage of automatically processed orders
-    //   against all orders
-    //
-    // Purpose:
-    // Improves system efficiency by automatically handling
-    // time-sensitive pending orders and providing clear
-    // processing statistics for system monitoring.
+    // Implemented by: Rajakumar Kishore - S10268853h
     // ==========================================================
 
 
@@ -219,8 +181,7 @@ class Program
         Console.WriteLine("6. Delete an existing order");
         Console.WriteLine("7. Display total order amount");
         Console.WriteLine("8. Bulk process today's pending orders");
-        Console.WriteLine("9. Display favourite restaurant");
-        Console.WriteLine("10. Reorder favourite order");
+        Console.WriteLine("9. Reorder favourite order");
         Console.WriteLine("0. Exit");
         Console.Write("Enter your choice: ");
     }
@@ -228,29 +189,7 @@ class Program
 
     // ==========================================================
     // Feature 5: Create a New Order
-    // Implemented by: Rajakumar Kishore - s10268853h
-    //
-    // Description:
-    // This feature allows a customer to place a new food order
-    // from a selected restaurant.
-    //
-    // Functions:
-    // - Prompts user for customer email, restaurant ID,
-    //   delivery date/time, and delivery address
-    // - Displays available food items for selection
-    // - Allows selection of multiple items and quantities
-    // - Accepts one optional special request
-    // - Calculates order total including delivery fee
-    // - Handles payment method selection
-    // - Assigns a unique Order ID
-    // - Sets order status to "Pending"
-    // - Adds the order to the Restaurant’s Order Queue
-    //   and the Customer’s Order List
-    // - Appends the new order to orders.csv
-    //
-    // Purpose:
-    // Enables customers to place and pay for new orders
-    // while ensuring data persistence and order tracking.
+    // Implemented by: Rajakumar Kishore - S10268853h
     // ==========================================================
 
 
@@ -331,11 +270,13 @@ class Program
             RestaurantId = selectedRestaurant.RestaurantId,
             OrderStatus = "Pending",
             DeliveryAddress = deliveryAddress,
+            OrderDateTime = DateTime.Now,   // ⭐ ADD THIS
             DeliveryDateTime = new DateTime(
-                deliveryDate.Year, deliveryDate.Month, deliveryDate.Day,
-                deliveryTime.Hour, deliveryTime.Minute, 0
-            )
+        deliveryDate.Year, deliveryDate.Month, deliveryDate.Day,
+        deliveryTime.Hour, deliveryTime.Minute, 0
+    )
         };
+
 
         // Add food items to order
         while (true)
@@ -477,25 +418,7 @@ class Program
 
     // ==========================================================
     // Feature 7: Modify an Existing Order
-    // Implemented by: <Your Name / Student ID>
-    //
-    // Description:
-    // This feature allows customers to modify their existing
-    // pending orders.
-    //
-    // Functions:
-    // - Prompts user to enter customer email
-    // - Displays all pending orders for that customer
-    // - Allows selection of a specific Order ID
-    // - Displays current order details
-    // - Allows modification of items, delivery address,
-    //   or delivery time
-    // - Updates order total if necessary
-    // - Prompts for additional payment if total increases
-    //
-    // Purpose:
-    // Provides flexibility for customers to update their
-    // pending orders while maintaining accurate order data.
+    // Implemented by: Rajakumar Kishore - S10268853h
     // ==========================================================
 
     static void ModifyOrder()
@@ -704,13 +627,13 @@ class Program
 
 
 
-                // 🔁 Recalculate total after ANY change
+                //  Recalculate total after ANY change
                 orderToModify.TotalAmount =
                     orderToModify.CalculateOrderTotal() + deliveryFee;
             }
 
 
-            // 💾 Save once after finishing edits
+            //  Save once after finishing edits
             SaveOrdersToCSV();
 
             Console.WriteLine($"\nOrder {orderToModify.OrderId} updated.");
@@ -784,23 +707,7 @@ class Program
 
     // ==========================================================
     // Feature 2: Load Customers and Orders from CSV Files
-    // Implemented by: Rajakumar Kishore - s10268853h
-    //
-    // Description:
-    // This feature loads customer and order data from CSV files
-    // during system initialisation.
-    //
-    // Functions:
-    // - Loads data from customers.csv
-    // - Creates Customer objects based on loaded data
-    // - Loads data from orders.csv
-    // - Creates Order objects
-    // - Adds each Order to the corresponding Restaurant’s
-    //   Order Queue and the Customer’s Order List
-    //
-    // Purpose:
-    // Ensures all customers and their past and pending orders
-    // are restored correctly for system operations.
+    // Implemented by: Rajakumar Kishore - S10268853h
     // ==========================================================
 
     static void LoadCustomers()
@@ -829,8 +736,7 @@ class Program
 
             string[] parts = lines[i].Split(',');
 
-            // Need at least 10 columns now (because of IsFavourite)
-            if (parts.Length < 10)
+            if (parts.Length < 9)
                 continue;
 
             int orderId = int.Parse(parts[0]);
@@ -843,10 +749,6 @@ class Program
             double totalAmount = double.Parse(parts[7]);
             string status = parts[8];
 
-            // ⭐ NEW: load favourite flag
-            bool isFavourite = false;
-            bool.TryParse(parts[9], out isFavourite);
-
             Order order = new Order(orderId);
             order.DeliveryDateTime = deliveryDateTime;
             order.DeliveryAddress = address;
@@ -854,7 +756,6 @@ class Program
             order.TotalAmount = totalAmount;
             order.OrderStatus = status;
             order.RestaurantId = restaurantId;
-            order.IsFavourite = isFavourite;   // ⭐ IMPORTANT
 
             // link customer
             for (int j = 0; j < customers.Count; j++)
@@ -870,6 +771,11 @@ class Program
             orders.Add(order);
         }
     }
+
+    // ==========================================================
+    // Feature 4: List all orders with basic information
+    // Implemented by: S10268576 – Tang Quan Jun
+    // ==========================================================
 
     static void ListAllOrders()
         {
@@ -897,10 +803,13 @@ class Program
         }
 
 
+    // ==========================================================
+    // Feature 1: Load Data from CSV Files
+    // Implemented by: S10268576 – Tang Quan Jun
+    // ==========================================================
 
 
-
-        static void LoadRestaurants()
+    static void LoadRestaurants()
         {
             string[] lines = File.ReadAllLines("restaurants.csv");
             for (int i = 1; i < lines.Length; i++)
@@ -918,7 +827,8 @@ class Program
             using (StreamWriter writer = new StreamWriter("orders.csv"))
             {
             // Write header
-            writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,DeliveryAddress,CreatedDateTime,TotalAmount,Status,IsFavourite,Items");
+            writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,DeliveryAddress,CreatedDateTime,TotalAmount,Status,Items");
+
 
 
             // Write each order
@@ -942,13 +852,21 @@ class Program
                     }
 
                 // Wrap items in quotes since they contain commas
-                writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus},{order.IsFavourite},\"{itemsString}\"");
+                writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus},\"{itemsString}\"");
+
                 // ← Added quotes
             }
         }
         }
 
-        static void LoadFoodItems()
+
+    // ==========================================================
+    // Feature 1: Load Data from CSV Files
+    // Implemented by: S10268576 – Tang Quan Jun
+    // ==========================================================
+
+
+    static void LoadFoodItems()
         {
             string[] lines = File.ReadAllLines("fooditems.csv");
             for (int i = 1; i < lines.Length; i++)
@@ -966,20 +884,7 @@ class Program
 
     // ==========================================================
     // Feature 3: List All Restaurants and Menu Items
-    // Implemented by: Rajakumar Kishore- s10268853h
-    //
-    // Description:
-    // This feature displays all restaurants currently available
-    // in the system along with their respective menu items.
-    //
-    // Functions:
-    // - Displays restaurant details (Name and Restaurant ID)
-    // - Displays each restaurant’s food items
-    //   including name, description, and price
-    //
-    // Purpose:
-    // Allows users to view all restaurants and their menus
-    // before placing an order.
+    // Implemented by: Rajakumar Kishore - S10268853h
     // ==========================================================
 
 
@@ -997,7 +902,10 @@ class Program
             }
         }
 
-   
+    // ==========================================================
+    // Feature 6: Process an order
+    // Implemented by: S10268576 – Tang Quan Jun
+    // ==========================================================
 
     static void ProcessOrder()
         {
@@ -1101,16 +1009,8 @@ class Program
         }
 
     // ==========================================================
-    // Advanced Feature B: Financial Summary and Earnings Report
+    // Advanced Feature B: Display total order amount
     // Implemented by: S10268576 – Tang Quan Jun
-    //
-    // Description:
-    // Calculates total delivered order revenue per restaurant,
-    // total refunds issued, and overall earnings for Gruberoo
-    // based on commission percentage.
-    //
-    // Purpose:
-    // Simulates real-world revenue analytics for platform operators.
     // ==========================================================
 
     static void DisplayTotalOrderAmount()
@@ -1159,17 +1059,8 @@ class Program
         }
 
     // ==========================================================
-    // Feature 6: Delete (Cancel) Existing Order
+    // Feature 8: Delete (Cancel) Existing Order
     // Implemented by: S10268576 – Tang Quan Jun
-    //
-    // Description:
-    // Enables a customer to cancel a pending order.
-    // The system validates ownership, updates order status to
-    // "Cancelled", processes refund via stack, and saves changes.
-    //
-    // Purpose:
-    // Provides safe order cancellation while maintaining
-    // transaction integrity.
     // ==========================================================
 
     static void DeleteOrder()
@@ -1253,60 +1144,9 @@ class Program
             }
         }
 
-    static void DisplayFavouriteRestaurant()
-    {
-        Restaurant favouriteRestaurant = null;
-        int maxDelivered = 0;
-
-        for (int i = 0; i < restaurants.Count; i++)
-        {
-            Restaurant r = restaurants[i];
-            int deliveredCount = 0;
-
-            for (int j = 0; j < orders.Count; j++)
-            {
-                if (orders[j].RestaurantId == r.RestaurantId &&
-                    orders[j].OrderStatus == "Delivered")
-                {
-                    deliveredCount++;
-                }
-            }
-
-            if (deliveredCount > maxDelivered)
-            {
-                maxDelivered = deliveredCount;
-                favouriteRestaurant = r;
-            }
-        }
-
-        Console.WriteLine("\nFavourite Restaurant");
-        Console.WriteLine("====================");
-
-        if (favouriteRestaurant != null)
-        {
-            Console.WriteLine($"Restaurant: {favouriteRestaurant.RestaurantName}");
-            Console.WriteLine($"Delivered Orders: {maxDelivered}");
-        }
-        else
-        {
-            Console.WriteLine("No delivered orders yet.");
-        }
-    }
-
     // ==========================================================
     // Bonus Feature: Favourite Orders & Reorder System
-    // Implemented by: S10268576 – Tang Quan Jun
-    //
-    // Description:
-    // Allows customers to mark orders as favourites and quickly
-    // reorder them. The system performs a deep copy of the original
-    // order’s items, generates a new Order ID and delivery time,
-    // resets status to "Pending", and saves the new order.
-    //
-    // Purpose:
-    // Enhances usability with real-world functionality similar to
-    // GrabFood’s “Reorder” feature while demonstrating advanced
-    // object-oriented programming design.
+    // Implemented by: S10268576 – Tang Quan Juns
     // ==========================================================
 
     static void ReorderFavouriteOrder()
@@ -1382,7 +1222,8 @@ class Program
             OrderStatus = "Pending",
             PaymentMethod = oldOrder.PaymentMethod,
             SpecialRequest = oldOrder.SpecialRequest,
-            IsFavourite = false
+            IsFavourite = false,
+            OrderDateTime = DateTime.Now
         };
 
         // ⭐ Deep copy items
