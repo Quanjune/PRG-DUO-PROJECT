@@ -24,6 +24,7 @@ namespace S10268576_PRG2Assignment
         public string SpecialRequest { get; set; } 
         public List<OrderedFoodItem> OrderedItems { get; set; }
         public Customer Customer { get; set; }
+        public bool IsFavourite { get; set; }
 
         public Order(int orderId)
         {

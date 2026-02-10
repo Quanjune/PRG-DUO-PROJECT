@@ -10,8 +10,19 @@ using System.IO;
 //==========================================================
 
 
-// Feature 1: Load files (restaurants and food items)
-// Implemented by: S10268576 - QUAN JUN
+// ==========================================================
+// Feature 1: Load Data from CSV Files
+// Implemented by: S10268576 – Tang Quan Jun
+//
+// Description:
+// This feature loads all required system data at program startup,
+// including restaurants, food items, customers, and orders from
+// their respective CSV files.
+//
+// Purpose:
+// Ensures the Gruberoo system is fully initialised with persistent
+// data before any operations are performed.
+// ==========================================================
 class Program
 {
 
@@ -81,6 +92,14 @@ class Program
             {
                 BulkProcessTodayOrders();
             }
+            else if (choice == 9)
+            {
+                DisplayFavouriteRestaurant();
+            }
+            else if (choice == 10)
+            {
+                ReorderFavouriteOrder();
+            }
             else if (choice == 0)
             {
                 Console.WriteLine("Thank you for using Gruberoo!");
@@ -89,7 +108,6 @@ class Program
             {
                 Console.WriteLine("Invalid choice. Please try again.");
             }
-
             if (choice != 0)
             {
                 Console.WriteLine("\nPress any key to continue...");
@@ -98,6 +116,21 @@ class Program
             }
         }
     }
+
+    // ==========================================================
+    // Feature 8: Bulk Process Pending Orders
+    // Implemented by: S10268576 – Tang Quan Jun
+    //
+    // Description:
+    // Automatically processes all pending orders based on delivery
+    // time rules. Orders within 60 minutes are rejected and refunded,
+    // while others move to "Preparing" status. Processing statistics
+    // are displayed and saved.
+    //
+    // Purpose:
+    // Demonstrates automated operational decision-making similar
+    // to real food delivery management systems.
+    // ==========================================================
 
     static void BulkProcessTodayOrders()
     {
@@ -170,6 +203,8 @@ class Program
         Console.WriteLine("6. Delete an existing order");
         Console.WriteLine("7. Display total order amount");
         Console.WriteLine("8. Bulk process today's pending orders");
+        Console.WriteLine("9. Display favourite restaurant");
+        Console.WriteLine("10. Reorder favourite order");
         Console.WriteLine("0. Exit");
         Console.Write("Enter your choice: ");
     }
@@ -373,6 +408,12 @@ class Program
 
         // Set the total amount (including delivery)
         newOrder.TotalAmount = totalAmount;
+
+        // ⭐ Ask if favourite
+        Console.Write("Mark this order as favourite? [Y/N]: ");
+        string favInput = Console.ReadLine()?.ToUpper();
+
+        newOrder.IsFavourite = favInput == "Y";
 
         // Add to lists
         orders.Add(newOrder);
@@ -682,54 +723,60 @@ class Program
         }
 
 
-        static void LoadOrders()
+    static void LoadOrders()
+    {
+        string[] lines = File.ReadAllLines("orders.csv");
+
+        for (int i = 1; i < lines.Length; i++)
         {
-            string[] lines = File.ReadAllLines("orders.csv");
+            if (string.IsNullOrWhiteSpace(lines[i]))
+                continue;
 
-            for (int i = 1; i < lines.Length; i++)
+            string[] parts = lines[i].Split(',');
+
+            // Need at least 10 columns now (because of IsFavourite)
+            if (parts.Length < 10)
+                continue;
+
+            int orderId = int.Parse(parts[0]);
+            string customerEmail = parts[1];
+            string restaurantId = parts[2];
+
+            DateTime deliveryDateTime = DateTime.Parse(parts[3] + " " + parts[4]);
+            string address = parts[5];
+            DateTime orderDateTime = DateTime.Parse(parts[6]);
+            double totalAmount = double.Parse(parts[7]);
+            string status = parts[8];
+
+            // ⭐ NEW: load favourite flag
+            bool isFavourite = false;
+            bool.TryParse(parts[9], out isFavourite);
+
+            Order order = new Order(orderId);
+            order.DeliveryDateTime = deliveryDateTime;
+            order.DeliveryAddress = address;
+            order.OrderDateTime = orderDateTime;
+            order.TotalAmount = totalAmount;
+            order.OrderStatus = status;
+            order.RestaurantId = restaurantId;
+            order.IsFavourite = isFavourite;   // ⭐ IMPORTANT
+
+            // link customer
+            for (int j = 0; j < customers.Count; j++)
             {
-                if (string.IsNullOrWhiteSpace(lines[i]))
-                    continue;
-
-                string[] parts = lines[i].Split(',');
-
-                if (parts.Length < 9)
-                    continue;
-
-                int orderId = int.Parse(parts[0]);
-                string customerEmail = parts[1];
-                string restaurantId = parts[2];
-
-                DateTime deliveryDateTime = DateTime.Parse(parts[3] + " " + parts[4]);
-                string address = parts[5];
-                DateTime orderDateTime = DateTime.Parse(parts[6]);
-                double totalAmount = double.Parse(parts[7]);
-                string status = parts[8];
-
-                Order order = new Order(orderId);
-                order.DeliveryDateTime = deliveryDateTime;
-                order.DeliveryAddress = address;
-                order.OrderDateTime = orderDateTime;
-                order.TotalAmount = totalAmount;
-                order.OrderStatus = status;
-                order.RestaurantId = restaurantId;
-
-                // link customer
-                for (int j = 0; j < customers.Count; j++)
+                if (customers[j].EmailAddress == customerEmail)
                 {
-                    if (customers[j].EmailAddress == customerEmail)
-                    {
-                        order.Customer = customers[j];
-                        customers[j].AddOrder(order);
-                        break;
-                    }
+                    order.Customer = customers[j];
+                    customers[j].AddOrder(order);
+                    break;
                 }
-
-                orders.Add(order);
             }
-        }
 
-        static void ListAllOrders()
+            orders.Add(order);
+        }
+    }
+
+    static void ListAllOrders()
         {
             Console.WriteLine("\nAll Orders");
             Console.WriteLine("==========");
@@ -775,11 +822,12 @@ class Program
         {
             using (StreamWriter writer = new StreamWriter("orders.csv"))
             {
-                // Write header
-                writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,DeliveryAddress,CreatedDateTime,TotalAmount,Status,Items");
+            // Write header
+            writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,DeliveryAddress,CreatedDateTime,TotalAmount,Status,IsFavourite,Items");
 
-                // Write each order
-                foreach (var order in orders)
+
+            // Write each order
+            foreach (var order in orders)
                 {
                     string customerEmail = order.Customer?.EmailAddress ?? "";
                     string deliveryDate = order.DeliveryDateTime.ToString("dd/MM/yyyy");
@@ -798,10 +846,11 @@ class Program
                         }
                     }
 
-                    // Wrap items in quotes since they contain commas
-                    writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus},\"{itemsString}\"");  // ← Added quotes
-                }
+                // Wrap items in quotes since they contain commas
+                writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus},{order.IsFavourite},\"{itemsString}\"");
+                // ← Added quotes
             }
+        }
         }
 
         static void LoadFoodItems()
@@ -836,7 +885,21 @@ class Program
             }
         }
 
-        static void ProcessOrder()
+    // ==========================================================
+    // Feature 4: Process Order Status
+    // Implemented by: Rajakumar Kishore
+    //
+    // Description:
+    // Allows restaurant staff to process customer orders by
+    // confirming, rejecting, skipping, or delivering them.
+    // The order status is updated accordingly and refunds are
+    // handled using a stack data structure when orders are rejected.
+    //
+    // Purpose:
+    // Simulates real-world restaurant order workflow management.
+    // ==========================================================
+
+    static void ProcessOrder()
         {
             Console.WriteLine("\nProcess Order");
             Console.WriteLine("=============");
@@ -937,8 +1000,20 @@ class Program
             SaveOrdersToCSV();
         }
 
+    // ==========================================================
+    // Advanced Feature B: Financial Summary and Earnings Report
+    // Implemented by: S10268576 – Tang Quan Jun
+    //
+    // Description:
+    // Calculates total delivered order revenue per restaurant,
+    // total refunds issued, and overall earnings for Gruberoo
+    // based on commission percentage.
+    //
+    // Purpose:
+    // Simulates real-world revenue analytics for platform operators.
+    // ==========================================================
 
-        static void DisplayTotalOrderAmount()
+    static void DisplayTotalOrderAmount()
         {
             double grandTotalOrders = 0;
             double grandTotalRefunds = 0;
@@ -983,8 +1058,21 @@ class Program
             Console.WriteLine($"Final Amount Gruberoo Earns: ${finalEarnings:F2}");
         }
 
+    // ==========================================================
+    // Feature 6: Delete (Cancel) Existing Order
+    // Implemented by: S10268576 – Tang Quan Jun
+    //
+    // Description:
+    // Enables a customer to cancel a pending order.
+    // The system validates ownership, updates order status to
+    // "Cancelled", processes refund via stack, and saves changes.
+    //
+    // Purpose:
+    // Provides safe order cancellation while maintaining
+    // transaction integrity.
+    // ==========================================================
 
-        static void DeleteOrder()
+    static void DeleteOrder()
         {
             Console.WriteLine("\nDelete Order");
             Console.WriteLine("============");
@@ -1064,6 +1152,158 @@ class Program
                 Console.WriteLine("Deletion cancelled.");
             }
         }
-    
+
+    static void DisplayFavouriteRestaurant()
+    {
+        Restaurant favouriteRestaurant = null;
+        int maxDelivered = 0;
+
+        for (int i = 0; i < restaurants.Count; i++)
+        {
+            Restaurant r = restaurants[i];
+            int deliveredCount = 0;
+
+            for (int j = 0; j < orders.Count; j++)
+            {
+                if (orders[j].RestaurantId == r.RestaurantId &&
+                    orders[j].OrderStatus == "Delivered")
+                {
+                    deliveredCount++;
+                }
+            }
+
+            if (deliveredCount > maxDelivered)
+            {
+                maxDelivered = deliveredCount;
+                favouriteRestaurant = r;
+            }
+        }
+
+        Console.WriteLine("\nFavourite Restaurant");
+        Console.WriteLine("====================");
+
+        if (favouriteRestaurant != null)
+        {
+            Console.WriteLine($"Restaurant: {favouriteRestaurant.RestaurantName}");
+            Console.WriteLine($"Delivered Orders: {maxDelivered}");
+        }
+        else
+        {
+            Console.WriteLine("No delivered orders yet.");
+        }
+    }
+
+    // ==========================================================
+    // Bonus Feature: Favourite Orders & Reorder System
+    // Implemented by: S10268576 – Tang Quan Jun
+    //
+    // Description:
+    // Allows customers to mark orders as favourites and quickly
+    // reorder them. The system performs a deep copy of the original
+    // order’s items, generates a new Order ID and delivery time,
+    // resets status to "Pending", and saves the new order.
+    //
+    // Purpose:
+    // Enhances usability with real-world functionality similar to
+    // GrabFood’s “Reorder” feature while demonstrating advanced
+    // object-oriented programming design.
+    // ==========================================================
+
+    static void ReorderFavouriteOrder()
+    {
+        Console.WriteLine("\nReorder Favourite Order");
+        Console.WriteLine("=======================");
+
+        // Step 1 — Get customer
+        Console.Write("Enter Customer Email: ");
+        string email = Console.ReadLine();
+
+        Customer customer = customers.Find(c => c.EmailAddress == email);
+        if (customer == null)
+        {
+            Console.WriteLine("Customer not found.");
+            return;
+        }
+
+        // Step 2 — Find favourite orders
+        List<Order> favouriteOrders = new List<Order>();
+
+        foreach (var o in customer.Orders)
+        {
+            if (o.IsFavourite)
+            {
+                favouriteOrders.Add(o);
+            }
+        }
+
+        if (favouriteOrders.Count == 0)
+        {
+            Console.WriteLine("No favourite orders found.");
+            return;
+        }
+
+        // Step 3 — Display favourites
+        Console.WriteLine("Favourite Orders:");
+        foreach (var o in favouriteOrders)
+        {
+            Console.WriteLine($"Order {o.OrderId} | Restaurant {o.RestaurantId} | Total ${o.TotalAmount:F2}");
+        }
+
+        // Step 4 — Choose order
+        Console.Write("Enter Order ID to reorder: ");
+        if (!int.TryParse(Console.ReadLine(), out int oldId))
+        {
+            Console.WriteLine("Invalid Order ID.");
+            return;
+        }
+
+        Order oldOrder = favouriteOrders.Find(o => o.OrderId == oldId);
+        if (oldOrder == null)
+        {
+            Console.WriteLine("Favourite order not found.");
+            return;
+        }
+
+        // Step 5 — Generate NEW Order ID
+        int newId = 1;
+        foreach (var o in orders)
+        {
+            if (o.OrderId >= newId)
+                newId = o.OrderId + 1;
+        }
+
+        // Step 6 — Create NEW order (DEEP COPY)
+        Order newOrder = new Order(newId)
+        {
+            Customer = customer,
+            RestaurantId = oldOrder.RestaurantId,
+            DeliveryAddress = oldOrder.DeliveryAddress,
+            DeliveryDateTime = DateTime.Now.AddHours(1),
+            OrderStatus = "Pending",
+            PaymentMethod = oldOrder.PaymentMethod,
+            SpecialRequest = oldOrder.SpecialRequest,
+            IsFavourite = false
+        };
+
+        // ⭐ Deep copy items
+        foreach (var item in oldOrder.OrderedItems)
+        {
+            newOrder.AddOrderedFoodItem(
+                new OrderedFoodItem(item.ItemName, item.Price, item.Quantity)
+            );
+        }
+
+        // Recalculate total
+        double subtotal = newOrder.CalculateOrderTotal();
+        newOrder.TotalAmount = subtotal + 5.00;
+
+        // Step 7 — Add to system
+        orders.Add(newOrder);
+        customer.AddOrder(newOrder);
+
+        SaveOrdersToCSV();
+
+        Console.WriteLine($"\nReorder successful! New Order ID: {newOrder.OrderId}");
+    }
 }
 
