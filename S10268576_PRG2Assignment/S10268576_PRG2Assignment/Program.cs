@@ -18,7 +18,7 @@ using System.IO;
 // This feature loads all required system data at program startup,
 // including restaurants, food items, customers, and orders from
 // their respective CSV files.
-//
+//  
 // Purpose:
 // Ensures the Gruberoo system is fully initialised with persistent
 // data before any operations are performed.
@@ -118,19 +118,35 @@ class Program
     }
 
     // ==========================================================
-    // Feature 8: Bulk Process Pending Orders
-    // Implemented by: S10268576 – Tang Quan Jun
+    // Advanced Feature (a): Bulk Processing of Unprocessed Orders
+    // Implemented by: Rajakumar Kishore - s10268853h
     //
     // Description:
-    // Automatically processes all pending orders based on delivery
-    // time rules. Orders within 60 minutes are rejected and refunded,
-    // while others move to "Preparing" status. Processing statistics
-    // are displayed and saved.
+    // This feature performs bulk processing of all unprocessed
+    // orders for the current day.
+    //
+    // Functions:
+    // - Identifies all orders with status "Pending"
+    // - Displays the total number of pending orders found
+    // - Iterates through each order in the Restaurant Order Queues
+    // - Automatically processes each order based on delivery time
+    // - Sets order status to "Rejected" if delivery time is
+    //   less than 1 hour from current time
+    // - Otherwise sets order status to "Preparing"
+    //
+    // Summary Statistics Displayed:
+    // - Total number of orders processed
+    // - Number of orders marked as "Preparing"
+    // - Number of orders marked as "Rejected"
+    // - Percentage of automatically processed orders
+    //   against all orders
     //
     // Purpose:
-    // Demonstrates automated operational decision-making similar
-    // to real food delivery management systems.
+    // Improves system efficiency by automatically handling
+    // time-sensitive pending orders and providing clear
+    // processing statistics for system monitoring.
     // ==========================================================
+
 
     static void BulkProcessTodayOrders()
     {
@@ -208,6 +224,34 @@ class Program
         Console.WriteLine("0. Exit");
         Console.Write("Enter your choice: ");
     }
+
+
+    // ==========================================================
+    // Feature 5: Create a New Order
+    // Implemented by: Rajakumar Kishore - s10268853h
+    //
+    // Description:
+    // This feature allows a customer to place a new food order
+    // from a selected restaurant.
+    //
+    // Functions:
+    // - Prompts user for customer email, restaurant ID,
+    //   delivery date/time, and delivery address
+    // - Displays available food items for selection
+    // - Allows selection of multiple items and quantities
+    // - Accepts one optional special request
+    // - Calculates order total including delivery fee
+    // - Handles payment method selection
+    // - Assigns a unique Order ID
+    // - Sets order status to "Pending"
+    // - Adds the order to the Restaurant’s Order Queue
+    //   and the Customer’s Order List
+    // - Appends the new order to orders.csv
+    //
+    // Purpose:
+    // Enables customers to place and pay for new orders
+    // while ensuring data persistence and order tracking.
+    // ==========================================================
 
 
     static void CreateNewOrder()
@@ -425,6 +469,34 @@ class Program
         Console.WriteLine($"\nOrder {newOrder.OrderId} created successfully!");
         Console.WriteLine($"Status: {newOrder.OrderStatus}");
     }
+
+
+
+
+
+
+    // ==========================================================
+    // Feature 7: Modify an Existing Order
+    // Implemented by: <Your Name / Student ID>
+    //
+    // Description:
+    // This feature allows customers to modify their existing
+    // pending orders.
+    //
+    // Functions:
+    // - Prompts user to enter customer email
+    // - Displays all pending orders for that customer
+    // - Allows selection of a specific Order ID
+    // - Displays current order details
+    // - Allows modification of items, delivery address,
+    //   or delivery time
+    // - Updates order total if necessary
+    // - Prompts for additional payment if total increases
+    //
+    // Purpose:
+    // Provides flexibility for customers to update their
+    // pending orders while maintaining accurate order data.
+    // ==========================================================
 
     static void ModifyOrder()
     {
@@ -708,7 +780,30 @@ class Program
             return -1; // Invalid input
         }
 
-        static void LoadCustomers()
+
+
+    // ==========================================================
+    // Feature 2: Load Customers and Orders from CSV Files
+    // Implemented by: Rajakumar Kishore - s10268853h
+    //
+    // Description:
+    // This feature loads customer and order data from CSV files
+    // during system initialisation.
+    //
+    // Functions:
+    // - Loads data from customers.csv
+    // - Creates Customer objects based on loaded data
+    // - Loads data from orders.csv
+    // - Creates Order objects
+    // - Adds each Order to the corresponding Restaurant’s
+    //   Order Queue and the Customer’s Order List
+    //
+    // Purpose:
+    // Ensures all customers and their past and pending orders
+    // are restored correctly for system operations.
+    // ==========================================================
+
+    static void LoadCustomers()
         {
             string[] lines = File.ReadAllLines("customers.csv");
             for (int i = 1; i < lines.Length; i++) // Start from index 1 to skip header
@@ -869,9 +964,26 @@ class Program
             }
         }
 
+    // ==========================================================
+    // Feature 3: List All Restaurants and Menu Items
+    // Implemented by: Rajakumar Kishore- s10268853h
+    //
+    // Description:
+    // This feature displays all restaurants currently available
+    // in the system along with their respective menu items.
+    //
+    // Functions:
+    // - Displays restaurant details (Name and Restaurant ID)
+    // - Displays each restaurant’s food items
+    //   including name, description, and price
+    //
+    // Purpose:
+    // Allows users to view all restaurants and their menus
+    // before placing an order.
+    // ==========================================================
 
 
-        static void ListAllRestaurantsAndMenuItems()
+    static void ListAllRestaurantsAndMenuItems()
         {
             Console.WriteLine("All Restaurants and Menu Items");
             Console.WriteLine("==============================");
@@ -885,19 +997,7 @@ class Program
             }
         }
 
-    // ==========================================================
-    // Feature 4: Process Order Status
-    // Implemented by: Rajakumar Kishore
-    //
-    // Description:
-    // Allows restaurant staff to process customer orders by
-    // confirming, rejecting, skipping, or delivering them.
-    // The order status is updated accordingly and refunds are
-    // handled using a stack data structure when orders are rejected.
-    //
-    // Purpose:
-    // Simulates real-world restaurant order workflow management.
-    // ==========================================================
+   
 
     static void ProcessOrder()
         {
