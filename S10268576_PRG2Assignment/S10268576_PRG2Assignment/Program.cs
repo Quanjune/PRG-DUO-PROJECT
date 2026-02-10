@@ -570,25 +570,7 @@ class Program
         }
     }
 
-    static void SaveOrdersToCSV()
-    {
-        using (StreamWriter writer = new StreamWriter("orders.csv"))
-        {
-            // Write header
-            writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,Address,OrderDateTime,TotalAmount,Status");
-
-            // Write each order
-            foreach (var order in orders)
-            {
-                string customerEmail = order.Customer?.EmailAddress ?? "";
-                string deliveryDate = order.DeliveryDateTime.ToString("dd/MM/yyyy");
-                string deliveryTime = order.DeliveryDateTime.ToString("HH:mm");
-                string orderDateTime = order.OrderDateTime.ToString("dd/MM/yyyy HH:mm");
-
-                writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus}");
-            }
-        }
-    }
+    
 
     static int GetUserChoice()
     {
@@ -617,25 +599,59 @@ class Program
     static void LoadOrders()
     {
         string[] lines = File.ReadAllLines("orders.csv");
-        for (int i = 1; i < lines.Length; i++) // Start from index 1 to skip header
+        for (int i = 1; i < lines.Length; i++)
         {
-            var parts = lines[i].Split(',');
+            if (string.IsNullOrWhiteSpace(lines[i]))
+                continue;
 
-            int orderId = int.Parse(parts[0]);
+            // Handle CSV with quoted fields
+            List<string> parts = new List<string>();
+            bool inQuotes = false;
+            string currentField = "";
+
+            for (int c = 0; c < lines[i].Length; c++)
+            {
+                char ch = lines[i][c];
+
+                if (ch == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (ch == ',' && !inQuotes)
+                {
+                    parts.Add(currentField);
+                    currentField = "";
+                }
+                else
+                {
+                    currentField += ch;
+                }
+            }
+            parts.Add(currentField); // Add last field
+
+            if (parts.Count < 9)
+            {
+                continue;
+            }
+
+            if (!int.TryParse(parts[0], out int orderId))
+                continue;
+
             string customerEmail = parts[1];
             string restaurantId = parts[2];
 
-            DateTime deliveryDateTime = DateTime.Parse($"{parts[3]} {parts[4]}");
+            if (!DateTime.TryParse($"{parts[3]} {parts[4]}", out DateTime deliveryDateTime))
+                continue;
+
             string address = parts[5];
-            DateTime orderDateTime = DateTime.Parse(parts[6]);
+
+            if (!DateTime.TryParse(parts[6], out DateTime orderDateTime))
+                continue;
 
             string amtText = parts[7].Trim().Replace("$", "").Replace(",", "");
             if (!double.TryParse(amtText, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out double totalAmount))
-            {
-                Console.WriteLine($"[ERROR] Bad amount '{parts[7]}' in orders.csv line: {lines[i]}");
                 continue;
-            }
 
             string status = parts[8];
 
@@ -644,25 +660,86 @@ class Program
                 DeliveryDateTime = deliveryDateTime,
                 TotalAmount = totalAmount,
                 OrderStatus = status,
-                RestaurantId = restaurantId
+                RestaurantId = restaurantId,
+                DeliveryAddress = address,
+                OrderDateTime = orderDateTime
             };
 
-            Customer customer = customers.Find(c => c.EmailAddress == customerEmail);
+            // Load ordered items from CSV
+            if (parts.Count >= 10 && !string.IsNullOrWhiteSpace(parts[9]))
+            {
+                // Find the restaurant
+                Restaurant restaurant = null;
+                for (int j = 0; j < restaurants.Count; j++)
+                {
+                    if (restaurants[j].RestaurantId == restaurantId)
+                    {
+                        restaurant = restaurants[j];
+                        break;
+                    }
+                }
+
+                if (restaurant != null)
+                {
+                    // Parse items: "Margherita Pizza,1|Pepperoni Pizza,1|Garlic Bread,1"
+                    string itemsString = parts[9].Trim();
+                    string[] itemPairs = itemsString.Split('|');
+
+                    for (int k = 0; k < itemPairs.Length; k++)
+                    {
+                        string[] itemData = itemPairs[k].Split(',');
+                        if (itemData.Length == 2)
+                        {
+                            string itemName = itemData[0].Trim();
+                            if (int.TryParse(itemData[1].Trim(), out int quantity))
+                            {
+                                // Find the food item to get the price
+                                FoodItem foodItem = null;
+                                for (int m = 0; m < restaurant.Menu.FoodItems.Count; m++)
+                                {
+                                    if (restaurant.Menu.FoodItems[m].ItemName == itemName)
+                                    {
+                                        foodItem = restaurant.Menu.FoodItems[m];
+                                        break;
+                                    }
+                                }
+
+                                if (foodItem != null)
+                                {
+                                    order.AddOrderedFoodItem(new OrderedFoodItem(
+                                        itemName,
+                                        foodItem.Price,
+                                        quantity
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Find customer and link order
+            Customer customer = null;
+            for (int j = 0; j < customers.Count; j++)
+            {
+                if (customers[j].EmailAddress == customerEmail)
+                {
+                    customer = customers[j];
+                    break;
+                }
+            }
+
             if (customer != null)
             {
                 customer.AddOrder(order);
                 order.Customer = customer;
             }
 
-            Restaurant restaurant = restaurants.Find(r => r.RestaurantId == restaurantId);
-            if (restaurant != null)
-            {
-                // Add to restaurant if needed
-            }
-
             orders.Add(order);
         }
     }
+
+
 
 
 
@@ -709,6 +786,38 @@ class Program
 
 
 
+
+    static void SaveOrdersToCSV()
+    {
+        using (StreamWriter writer = new StreamWriter("orders.csv"))
+        {
+            // Write header
+            writer.WriteLine("OrderId,CustomerEmail,RestaurantId,DeliveryDate,DeliveryTime,Address,OrderDateTime,TotalAmount,Status,Items");
+
+            // Write each order
+            foreach (var order in orders)
+            {
+                string customerEmail = order.Customer?.EmailAddress ?? "";
+                string deliveryDate = order.DeliveryDateTime.ToString("dd/MM/yyyy");
+                string deliveryTime = order.DeliveryDateTime.ToString("HH:mm");
+                string orderDateTime = order.OrderDateTime.ToString("dd/MM/yyyy HH:mm");
+
+                // Format items as: ItemName1:Quantity1|ItemName2:Quantity2
+                string itemsString = "";
+                for (int i = 0; i < order.OrderedItems.Count; i++)
+                {
+                    var item = order.OrderedItems[i];
+                    itemsString += $"{item.ItemName}:{item.Quantity}";
+                    if (i < order.OrderedItems.Count - 1)
+                    {
+                        itemsString += "|";
+                    }
+                }
+
+                writer.WriteLine($"{order.OrderId},{customerEmail},{order.RestaurantId},{deliveryDate},{deliveryTime},{order.DeliveryAddress},{orderDateTime},{order.TotalAmount:F2},{order.OrderStatus},{itemsString}");
+            }
+        }
+    }
 
 
     static void LoadFoodItems()
